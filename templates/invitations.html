@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+
+<h1 class="display-2 text-center">Invitations</h1>
+<div class="row justify-content-center py-5">
+    {% if invite %}
+        {% for i in invite %}
+        {% if i.accepted == False %}
+        <div class="col-7 mb-2">    
+            <div class="card">
+                <div class="card card-header">
+                    <small class="fs-5">Project name: {{i.project}}</small>
+                </div>
+                <div class="row">
+                    <div class="col-7 m-2">
+                        <p class="mx-2">Sender: {{i.sender}}</p>
+                        <p class="mx-2">Sent date: {{i.sent_date|date:'M j Y h:i A'}}</p>
+                    </div>
+                    <div class="col-4">
+                        <div class="row h-100 my-3">
+                            <div class="col-4">
+                                <form method="POST" action="{% url "accept_invitation" i.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-dark">Accept</button>
+                                </form>
+                            </div>
+                            <div class="col-4">
+                                <form method="POST" action="{% url "decline_invitation" i.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-dark">Decline</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    {% else %}
+    <div class="col-5">
+        <div class="card card-header">
+            <p class="text-center" > No Invitations Sent </p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

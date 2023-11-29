@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static "css/stylesheet.css" %}">
+
+<div class="row justify-content-center">
+    <div class="col-12">
+        <h1 class="display-1 text-center" id="title">Projects</h1>
+    </div>
+</div>
+
+<!-- Contenedor de proyectos -->
+<div class="container mx-auto" id="my_proj">
+    <div class="row justify-content-center">
+        <div class="col-10">
+            <div class="row justify-content-start">
+                <div class="col-1">
+                    <select class="rounded bg-dark text-white text-start p-1" id="option" onchange="project()">
+                        <option value="3">Select projects</option>
+                        <option value="0">Your projects</option>
+                        <option value="1">Other projects</option>
+                    </select>
+                </div>
+                
+                <div class="col-8 text-end">
+                    <button class="btn btn-dark " id="add_proj">Create Project</button>
+                </div>
+            </div>
+            
+            <!-- Formulario creacion de proyecto -->
+            <div class="from-f hidden" id="form">
+                <div class="row justify-content-center">
+                    <div class="col-12 text-center" >
+                        <h1 class="display-3">Project Form</h1>
+                    </div>
+                    <div class="col-8 m-4">
+                        <form method="POST">
+                            {{form.as_p}}
+                            {% csrf_token %}
+                            <button class="btn btn-secondary mx-auto" id="undo" >Undo</button>
+                            <button class="btn btn-dark">Create</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12" id="m_proj">
+        <!-- Proyectos creados por el usuario actual -->
+        {% for p in project %}
+            {% if p.admin == user %}
+                <div class="row mt-3">
+                    <div class="col-10 mx-auto">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <h5 class="card-title">
+                                            <!-- "Nombre de proyecto" enlace para editar proyecto -->
+                                            <a class="text-decoration-none" href="{% url 'project_view' p.id %}">{{p.nombre}}</a>
+                                        </h5>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <!-- Boton para editar proyecto -->
+                                        <button class="btn btn-sm ">
+                                            <a href="{% url 'project_view' p.id %}">
+                                                <img src="{% static "images/edit_fill_write_icon.svg" %}" style="width: 100%; max-width: 40px; height: auto;">
+                                            </a>
+                                        </button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">Fecha Termino Proyecto: {{p.fechaTermino|date:'M j Y h:i'}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+        </div>
+        <!-- Proyectos a los cuales el usuario pertenece como miembro -->
+        {% for p in project %}
+            {% for m in member %}
+            {% if p == m.project %}
+            <div class="col-12" id="o_proj">
+                <div class="row mt-3">
+                    <div class="col-10 mx-auto">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <h5 class="card-title">
+                                        <a class="text-decoration-none" href="{% url 'project_view' p.id %}">{{p.nombre}}</a>
+                                        </h5>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <button class="btn btn-sm ">
+                                            <a href="{% url 'project_view' p.id %}">
+                                                <img src="{% static "images/edit_fill_write_icon.svg" %}" style="width: 100%; max-width: 40px; height: auto;">
+                                            </a>
+                                        </button>
+                                    </div>  
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">Fecha Termino Proyecto: {{p.fechaTermino|date:'M j Y h:i'}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        {% endfor %}
+        </div>
+        
+    </div>
+</div>
+
+<script src="{% static "js/project.js" %}"></script>
+
+{% endblock %}

@@ -1,0 +1,398 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block scripts %}
+<script>
+// jquery function
+$(document).ready(function(){
+    var ctx = document.getElementById('myChart').getContext('2d');
+    console.log(ctx);
+
+    // Count the number of completed and not completed tasks
+    var completedCount = 0;
+    var notCompletedCount = 0;
+
+    {% for data in task %}
+        {% if data.completado %}
+            completedCount++;
+        {% else %}
+            notCompletedCount++;
+        {% endif %}
+    {% endfor %}
+
+    var myChart = new Chart(ctx, {  
+        type: 'doughnut',
+        data: {
+            labels: ['Completadas', 'No completadas'],
+            datasets: [{
+                label: '# of tasks',
+                data: [completedCount, notCompletedCount],
+                backgroundColor: [
+                    'rgba(75, 192, 192, 0.2)', // Completed tasks color
+                    'rgba(255, 99, 132, 0.2)'  // Not completed tasks color
+                ],
+                borderColor: [
+                    'rgba(75, 192, 192, 1)',  // Completed tasks border color
+                    'rgba(255, 99, 132, 1)'   // Not completed tasks border color
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock scripts %}
+
+{% block content %}
+
+<!-- Enlace a la hoja de estilos CSS -->
+<link rel="stylesheet" href="{% static "css/stylesheet.css" %}">
+
+<!-- Contenedor principal de la página, dividido en filas y columnas -->
+<div class="row" style="height: 100vh;">
+    <!-- Columna izquierda de ancho 2, con fondo oscuro -->
+    <div class="col-lg-2 bg-dark">
+        <!-- Fila en la columna izquierda -->
+        <div class="row">
+            <!-- Botón en el centro con un enlace para volver atrás -->
+            <div class="col-md-12 mt-2 text-center">
+                <button class="btn btn-dark btn-sm  text-white">
+                    <a class="text-decoration-none fs-5 py-1 text-white" href="{% url 'project' %}"> ⬅ Volver</a>
+                </button>
+            </div>
+            <div class="col-12 mt-2 text-center">
+                <p class="fs-5 text-white py-1" > Detalles del proyecto </p>
+                <ol class="text-white " align="justify" style="list-style-type: none;">
+                    <li class="lh-lg">Nombre: {{project.nombre}}</li>
+                    <li class="mt-2">Fecha de Creación/Inicio: <br> {{project.fechaInicio}}</li>
+                    <li class="mt-2">Fecha de Termino estimada: <br> {{project.fechaTermino}}</li>
+                    <li class="mt-2 lh-lg">Administrador: {{project.admin}}</li>
+                </ol>
+            </div>
+            {% if project.admin == user %}
+                <form class="col-12 mb-2 text-center" method="POST" action="{% url 'delete_project' project.id %}">
+                    {% csrf_token %}
+                    <button class="btn p-1 btn-sm btn-danger"> Eliminar proyecto </button>
+                </form>
+            {% endif %} 
+            {% for m in member %}
+                {% if m.person == user %}
+                <form class="col-12 mb-2 text-center" method="POST" action="{% url 'exit_project' project.id %}">
+                        {% csrf_token %}
+                        <button class="btn p-1 btn-sm btn-danger"> Salir de proyecto </button>
+                </form> 
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Columna central de ancho 8, con fondo claro -->
+    <div class="col-lg-8 bg-light" style="height: auto;">
+        <!-- Fila en la columna central -->
+        <div class="row text-start">
+            <!-- Dos botones: "Project" y "Statistics" -->
+            <div class="col-lg-1 text-center"><button id="pt" class="btn btn-light text-decoration-none"> Proyecto </button></div>
+            <div class="col-lg-1 text-center"><button id="st" class="btn btn-light text-decoration-none"> Estadísticas </button></div>
+        </div>
+        
+        <!-- Fila en el centro con elementos Kanban (tabla) y estadísticas ocultas -->
+        <div class="row kanban justify-content-center show" style="height: auto;">
+                    
+            <!-- Tablero Kanban con elementos desplazables horizontalmente -->
+            <div class="kanban g-0" style="overflow: scroll; height: 100%" id="kanban-board">
+                
+                <!-- Tabla que muestra las etapas del proyecto -->
+                <table class="col-12" style="height: 100vh;">
+                    <thead>
+                        <tr>
+                            <!-- Itera a través de las etapas del proyecto y muestra sus nombres -->
+                            {% for s in stage %}   
+                            <th class="text-center pr-col" style="border: 2px solid black; background-color:{{s.color}}; width:auto;" >
+                                {% if project.admin == user %}
+                                <p>
+                                    <form method="POST" action="{% url 'delete_stage' project.id s.id%}">
+                                        <small class="fs-5">{{s.nombre}}</small>
+                                        {% csrf_token %}
+                                        <button class="x-button">
+                                                <img draggable="false" style="width: 100%; min-width: 24px; max-width:24px; height: auto;" src="{% static "images/x-button.png" %}">
+                                        </button>
+                                    </form>
+                                </p>
+                                {% else %}
+                                <p class="fs-5 text-center">{{s.nombre}}</p>
+                                {% endif %}
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if task %}
+                        <tr>
+                            <!-- Itera a través de las etapas del proyecto y muestra las tareas en cada etapa -->
+                            {% for x in stage %}
+                            <td class="pr-col " style="border: 2px solid black; width:auto;">
+                                <div class="row" style="height:100%;">
+                                    <div class="col-11 mx-auto mt-2" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                <!-- Itera a través de las tareas y muestra las tareas en esta etapa -->
+                                {% for t in task %}
+                                    {% if t.stage == x %}
+                                            <div class="task p-3" id="{{t.id}}" draggable="true" ondragstart="drag(event)">
+                                                <div class="row">
+                                                    <a class="col-md-8 text-decoration-none" onclick="toggleTaskDetails({{ t.id }})">{{t.nombre}}</a>
+                                                    <!-- Formulario para eliminar tareas (solo visible para el administrador del proyecto) -->
+                                                    {% if project.admin == user %}
+                                                    <div class="col-xl-1">
+                                                        <form method="POST" action="{% url "project_delete_task" project.id t.id %}">
+                                                            {% csrf_token %} 
+                                                            <button class="btn p-1 btn-sm btn-danger"> Eliminar </button>
+                                                        </form>
+                                                    </div>
+                                                    {% endif %}
+                                                    {% if t.encargado %}
+                                                    <div class="col-lg-12">
+                                                        <img draggable="false" style="width: 100%; min-width: 25px; max-width: 25px; height: auto;" src="{% static "images/default_user.png" %}">
+                                                        {{t.encargado.person.username}}
+                                                        </img>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                    {% endif %}
+                                {% endfor %}
+                                    </div>
+                                </div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+                
+            </div>
+
+            <!-- Contenedor de estadísticas oculto -->
+            <div class="row justify-content-center kanban g-0 hidden" id="stats" style="overflow-x:auto; height: 100vh;">
+                <div class="col-12">
+                    <h1 class="display-1 text-center">Tareas Completadas</h1>
+                    <canvas id="myChart" width="400" height="100"></canvas>  
+                </div>
+            </div>
+
+            <!-- Contenedor para crear nuevas tareas oculto -->
+            <div class="row justify-content-center kanban g-0 hidden" style="height: auto;" id="create">
+                <div class="col-lg-4 m-4 mx-auto bg-secondary rounded">
+                    <h1 class="fs-3 text-center p-2"> Crear tarea </h1>
+                    {{error}}
+                    <form class="m-4 p-4" method="POST">
+                        {{form.as_p}}
+                        {% csrf_token %}
+                        <button class="btn btn-dark" id="create">Crear tarea</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Contenedor para crear nuevas etapas oculto -->
+            <div class="row justify-content-center kanban g-0 hidden" style="overflow-x:auto; height: auto;" id="create_2">
+                <div class="col-lg-4 m-4 mx-auto bg-secondary rounded">
+                    <h1 class="fs-3 text-center mt-2"> Crear etapa de proyecto </h1>
+                    {{error}}
+                    <form class="m-4 p-2" method="POST">
+                        {{form_s.as_p}}
+                        {% csrf_token %}
+                        <button class="btn btn-dark mt-2" id="create">Crear etapa</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="row justify-content-center kanban g-0 " style="height: auto;">
+                <!-- ... (existing HTML) -->
+                <div id="task-details-container" class="col-5 m-4 hidden mx-auto bg-secondary rounded">
+                    <form id="form-t" class="m-2 p-2" method="POST">
+                        <h1 class="fs-3 text-center mb-4"> Detalles de tarea </h1>
+                        {% csrf_token %}
+                        <p>
+                            <label for="nombre" class="text-left" >Nombre:</label>
+                            <input class="rounded mx-2 col-7" type="text" name="nombre" maxlength="50" required="" id="nombre">
+                        </p>
+
+                        <p>
+                            <label for="desc">Descripcion:</label>
+                            <textarea class="form-control col-12 mt-2" name="descripcion" cols="40" rows="2"id="desc"></textarea>
+                        </p>
+
+                        <p>
+                            <label for="id_stage">Estado:</label>
+                            <small class="fs-5" id="estado"></small>
+                        </p>
+
+                        <p>
+                            <label for="id_stage">Stage:</label>
+                            <select name="stage" class="form-control" required="" id="id_stage">
+                                <option id="x" value="" selected=""></option>
+                                {% for t in stage %}
+                                    <option value="{{t.id}}">{{t.nombre}}</option>
+                                {% endfor %}                         
+                            </select>
+                        </p>
+
+                        <button class="btn btn-dark text-center">Actualizar tarea</button>
+                    
+                    </form>
+                    <form class="row justify-content-center" id="form-complete" method="POST">
+                        {% csrf_token %}
+                        <button class="col-5 btn btn-dark mb-2">Completar tarea</button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    
+    </div>
+    <!-- Columna derecha de ancho 2, con fondo oscuro -->
+    <div class="col-lg-2 bg-dark">
+        <div class="row">
+            <!-- Si el administrador del proyecto es el usuario actual, muestra opciones adicionales -->
+            {% if project.admin == user %}
+            <div class="col-12 text-center">
+                <button class="btn bg-light mt-2">
+                    <div class="col-md-6 mx-auto">
+                        <a href="{% url 'make_invitation' project.id %}" ><img src="{% static "images/invite_icon.svg" %}" style="width: 30px; height: auto;"></a>
+                    </div> 
+                    <small>Invitar personas</small>
+                </button>
+            </div>
+            
+            <div class="col-12 text-center">
+                <button class="btn bg-light mt-2" id="create_t">
+                    <div class="col-md-6 mx-auto">
+                        <img src="{% static "images/create_task.png" %}" style="width: 32px; height: auto;">
+                    </div> 
+                    <small>Crear tarea</small>
+                </button>
+                <button class="btn bg-light mt-2" id="create_s">
+                    <div class="col-md-6 mx-auto">
+                        <img src="{% static "images/new_stage.png" %}" style="width: 32px; height: auto;">
+                    </div> 
+                    <small>Agregar etapa</small>
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        <div class="row mx-auto mt-4" style=" border-bottom: solid #0c1354; border-top: solid #0c1354; width:100%;">
+            <div class="col-12">
+                <p class="fs-5 text-white"> Miembros del proyecto </p>
+            </div>
+            <!-- Muestra al administrador del proyecto -->
+            <div class="col-lg-12 text-center" >
+                <div class="row">
+                    <div class="col-3">
+                        <img class="user-small" draggable="false" alt="member" src="{% static "images/default_user.png" %}"></img>
+                    </div>
+                    <div class="col-3">
+                        <p class="col-12 text-white lh-sm">
+                        {% if project.admin == user %}
+                        You
+                        <br>(Admin)
+                        {% else %}
+                        {{project.admin}}
+                        <br>(Admin)
+                        {% endif %}
+                        </p>
+                    </div>
+                </div>                
+            </div>
+            <!-- Itera a través de los miembros del proyecto y los muestra -->
+            {% for m in member %}
+            <div class="col-lg-12 text-center mt-1 mb-1">
+                <div class="row">
+                    <div class="col-3">
+                        <img class="user-small" draggable="false" alt="member" src="{% static "images/default_user.png" %}"></img>
+                    </div>
+                    <div class="col-3">
+                        {% if m.person == user %}
+                        <p class="text-white">You</p>
+                        {% else %}
+                        <p class="text-white">{{m.person}}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-6 text-end">
+                        {% if project.admin == user %}
+                        <form method="POST" action="{% url "delete_member" project.id m.person.id %}">
+                            {% csrf_token %}    
+                            <button class="btn btn-sm btn-danger mb-2 text-white">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Inclusión de script JavaScript para la página -->
+<script src="{% static "js/project_view.js" %}"></script>
+<script>
+    function getTaskDetailsFromDatabase(taskId) {
+        return fetch(`/get_task_details/${taskId}/`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    }
+    
+    function toggleTaskDetails(taskId) {
+        const taskDetailsContainer = document.getElementById('task-details-container');
+        const kanbanBoard= document.getElementById("kanban-board");
+        const inName= document.getElementById("nombre");
+        const inDesc= document.getElementById("desc");
+        
+        const task= document.getElementById("form-t");
+        const tcomplete= document.getElementById("form-complete");
+        const stage= document.getElementById('x');
+        const status= document.getElementById('estado');
+
+        getTaskDetailsFromDatabase(taskId)
+            .then(taskDetails => {
+                if (taskDetails) {
+                    inName.setAttribute('value', taskDetails.nombre);
+
+                    task.setAttribute('action', `/update_task_details/${taskDetails.project__id}/${taskDetails.id}`);
+                    tcomplete.setAttribute('action', `/complete_project_task/${taskDetails.project__id}/${taskDetails.id}`);
+                    
+                    inDesc.value = taskDetails.descripcion;
+                    stage.value = taskDetails.project__id;
+                    stage.text = taskDetails.stage__nombre;
+                    if (taskDetails.completado){
+                        status.innerHTML = 'Completada';
+                    }else{
+                        status.innerHTML = 'Incompleta';
+                    }
+                } else {
+                    taskDetailsContainer.innerHTML = '<p class="text-center">Task not found</p>';
+                }
+                kanbanBoard.classList.remove("show");
+                kanbanBoard.classList.add("hidden");
+                taskDetailsContainer.classList.remove("hidden");
+                taskDetailsContainer.classList.add("show");
+            });
+    }
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" integrity="sha256-Uv9BNBucvCPipKQ2NS9wYpJmi8DTOEfTA/nH2aoJALw=" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css" integrity="sha256-aa0xaJgmK/X74WM224KMQeNQC2xYKwlAt08oZqjeF0E=" crossorigin="anonymous" />
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+
+{% endblock %}

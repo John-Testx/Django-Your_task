@@ -1,0 +1,64 @@
+
+div.custom-card,
+div.custom-card:hover {
+  color: inherit;
+}
+
+.container .hover-target {
+  display: none;
+}
+
+.container .hover-trigger:hover + .hover-target {
+  display: block;
+  border-style: solid;
+}
+
+.x-button {
+  background-color: #f204044a;
+  border-radius: 25px;
+  border: 1px solid #f204044a;
+}
+
+.pr-col{ min-width:20vw; max-width:30vw;width:100%; height:100%; }
+
+.from-f {
+  background-color: lightgrey;
+  border-style: solid;
+  border-color: lightgray;
+  border-radius: 15px;
+  height: auto;
+  margin-top: 10px;
+}
+
+.kanban {
+  background-color: lightgrey;
+}
+
+.task {
+  background-color: white;
+  margin: 0.2rem 0rem 0.3rem 0rem;
+  border: 0.1rem solid black;
+  border-radius: 0.2rem;
+}
+
+.hidden {
+  display: none;
+}
+
+img.user-small {
+  width: 41px;
+  min-width: 40px;
+  max-width: 50px;
+  height: auto;
+}
+
+img.user-small:hover{
+  width: 49px;
+}
+
+
+.show{
+  display: block;
+}
+
+

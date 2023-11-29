@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static "css/stylesheet.css" %}">
+
+<div class="row mt-2  justify-content-center">
+    <div class="col-4 bg-dark rounded">
+        <h1 class="display-4 text-light text-center">Django Projects App</h1>
+    </div>
+</div>
+
+<main class="container bg-dark rounded py-4 mt-2">
+
+    <div class="row mt-ms-3 justify-content-center">
+        <div class="col-3">
+            <div class="row text-center"> <h1 class="display-6 text-white">Info</h1> </div>
+            <div class="row">
+                <p align="justify" class="text-white">
+                    Esta página proporciona una interfaz de usuario para administrar tareas dentro de un proyecto, organizarlas en etapas y ver estadísticas del proyecto.
+                </p>
+                <p align="justify" class="text-white">
+                    El administrador también pueden crear nuevas tareas y administrar miembros del proyecto. Las tareas en el tablero kanban se pueden arrastrar, lo que permite a los usuarios cambiar sus etapas.
+                </p>
+                <p align="justify" class="text-white">
+                    La parte de tareas sirve como interfaz de usuario para administrar tareas personales, incluida la creación de nuevas tareas, marcar tareas como completadas y eliminar tareas.
+                </p>
+            </div>
+        </div>
+        <div class="col-8 mx-4">
+            <div class="row">
+                <div class="col-lg-6 mt-3">
+                    <div class="card btn btn-light" >
+                        <div class="row">
+                            <div class="col-3 ">
+                                <svg class="mt-2 mx-3 img-fluid rounded-start" style="width: 100%; max-width: 120px; height: auto;" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M495.6 49.23l-32.82-32.82C451.8 5.471 437.5 0 423.1 0c-14.33 0-28.66 5.469-39.6 16.41L167.5 232.5C159.1 240 154.8 249.5 152.4 259.8L128.3 367.2C126.5 376.1 133.4 384 141.1 384c.916 0 1.852-.0918 2.797-.2813c0 0 74.03-15.71 107.4-23.56c10.1-2.377 19.13-7.459 26.46-14.79l217-217C517.5 106.5 517.4 71.1 495.6 49.23zM461.7 94.4L244.7 311.4C243.6 312.5 242.5 313.1 241.2 313.4c-13.7 3.227-34.65 7.857-54.3 12.14l12.41-55.2C199.6 268.9 200.3 267.5 201.4 266.5l216.1-216.1C419.4 48.41 421.6 48 423.1 48s3.715 .4062 5.65 2.342l32.82 32.83C464.8 86.34 464.8 91.27 461.7 94.4zM424 288c-13.25 0-24 10.75-24 24v128c0 13.23-10.78 24-24 24h-304c-13.22 0-24-10.77-24-24v-304c0-13.23 10.78-24 24-24h144c13.25 0 24-10.75 24-24S229.3 64 216 64L71.1 63.99C32.31 63.99 0 96.29 0 135.1v304C0 479.7 32.31 512 71.1 512h303.1c39.69 0 71.1-32.3 71.1-72L448 312C448 298.8 437.3 288 424 288z"/>
+                                </svg>
+                            </div>
+                            <div class="col-7">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <a class="text-decoration-none" href="{% url 'usertask' %}">
+                                            <strong> Tasks</strong>
+                                        </a>                  
+                                    </h5>
+                                    <p class="card-text">
+                                        Your personal tasks are defined here.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mt-3">
+                    <div class="card btn btn-light">
+                        <div class="row">
+                            <div class="col-3">
+                                <svg class="mt-3 mx-3 img-fluid rounded-start" style="width: 100%; max-width: 120px; height: auto;" viewBox="0 0 576 512" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M572.6 270.3l-96 192C471.2 473.2 460.1 480 447.1 480H64c-35.35 0-64-28.66-64-64V96c0-35.34 28.65-64 64-64h117.5c16.97 0 33.25 6.742 45.26 18.75L275.9 96H416c35.35 0 64 28.66 64 64v32h-48V160c0-8.824-7.178-16-16-16H256L192.8 84.69C189.8 81.66 185.8 80 181.5 80H64C55.18 80 48 87.18 48 96v288l71.16-142.3C124.6 230.8 135.7 224 147.8 224h396.2C567.7 224 583.2 249 572.6 270.3z"/>
+                                </svg>
+                            </div>
+                            <div class="col-7">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <a class="text-decoration-none" href="{% url 'project' %}">
+                                            <strong> Projects</strong>
+                                        </a>                  
+                                    </h5>
+                                    <p class="card-text">
+                                        You can access your Projects through here.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+
+
+

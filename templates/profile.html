@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Enlace hoja de estilo CSS -->
+<link rel="stylesheet" href="{% static "css/stylesheet.css" %}">
+
+<!-- Contenedor principal de la página -->
+<main class="container py-4">
+    <!-- Sección de encabezado con título -->
+    <section class="card mx-2 card-body p-1 bg-dark text-white">
+        <h1 class="display-3 text-center">Perfil de Usuario</h1>
+    </section>
+    
+    <!-- Contenedor de información de usuario en dos columnas -->
+    <div class="row mx-auto">
+        <!-- Sección de imagen de usuario -->
+        <section class="card col-2 card-body mx-2 mt-2 bg-secondary text-center text-white">
+            <p class="fs-5 text-white">Foto de Usuario</p>
+            <img draggable="false" alt="Foto_de_usuario" src="{% static "images/default_user.png" %}"></img>
+        </section>
+
+        <!-- Sección de información de usuario -->
+        <section class="card col-7 card-body mx-2 mt-2 bg-secondary text-white">
+            <p class="fs-3 text-white py-1 card-title text-start">Información</p>
+            <div class="col-12 mt-2 text-center">
+                <ol class="text-white" align="justify" style="list-style-type: none;">
+                    <li class="lh-lg"><p>Nombre de usuario: <small class="mx-3 fs-6">{{user.username}}</small></p></li>
+                    <li>
+                        <form method="POST">
+                            <p>
+                                <label for="id_first_name">Nombre:</label>
+                                <input type="text" name="first_name" value="{{user.first_name}}" class="rounded mx-4" maxlength="30" id="id_first_name">
+                                
+                                <label for="id_last_name">Apellido:</label>
+                                <input type="text" name="last_name" value="{{user.last_name}}" class="rounded mx-4" maxlength="150" id="id_last_name">
+                            </p>
+                            <p>
+                                <label for="id_email" class="my-2">Dirección de correo electrónico:</label>
+                                <input type="mail" name="email" value="{{user.email}}" class="rounded mx-4 px-4" maxlength="254" id="id_email">
+                            </p>
+                        </form>
+                    </li>
+                    <li class="lg-lg">Tipo de cuenta: Usuario común</li>
+                    <li class="lh-lg">Fecha de registro: {{user.date_joined|date:'l M j Y h:i A'}}</li>
+                </ol>
+            </div>
+        </section>
+    </div>
+</main>
+
+{% endblock content %}
