@@ -14,7 +14,7 @@
 
     <div class="row mt-ms-3 justify-content-center">
         <div class="col-3">
-            <div class="row text-center"> <h1 class="display-6 text-white">Info</h1> </div>
+            <div class="row text-center"> <h1 class="display-6 text-white">Info</h1></div>
             <div class="row">
                 <p align="justify" class="text-white">
                     Esta página proporciona una interfaz de usuario para administrar tareas dentro de un proyecto, organizarlas en etapas y ver estadísticas del proyecto.
@@ -29,7 +29,8 @@
         </div>
         <div class="col-8 mx-4">
             <div class="row">
-                <div class="col-lg-6 mt-3">
+                {% if data.user == 'CommonUser' %}
+                <div class="col-12 mt-3">
                     <div class="card btn btn-light" >
                         <div class="row">
                             <div class="col-3 ">
@@ -52,7 +53,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-6 mt-3">
+                {% endif %}
+                {% if data.user == 'ProjectAdmin' or data.user == 'ProjectMember' %}
+                <div class="col-12 mt-3">
                     <div class="card btn btn-light">
                         <div class="row">
                             <div class="col-3">
@@ -64,17 +67,28 @@
                                 <div class="card-body">
                                     <h5 class="card-title">
                                         <a class="text-decoration-none" href="{% url 'project' %}">
-                                            <strong> Projects</strong>
+                                            {% if request.user.projectadmin.esProjectAdmin %}
+                                            <strong> Mis Proyectos</strong>
+                                            {% elif request.user.projectmember.esProjectMember %}
+                                            <strong> Proyectos</strong>
+                                            {% endif %}
                                         </a>                  
                                     </h5>
-                                    <p class="card-text">
-                                        You can access your Projects through here.
+                                    <p class="card-text text-justify">
+                                        
+                                        {% if request.user.projectadmin.esProjectAdmin %}
+                                            Tu usuario actual es jefe de proyecto. Este es el acceso a la vista de proyectos,
+                                            en esta vista esta la lista de proyectos que diriges.
+                                        {% elif request.user.projectmember.esProjectMember %}
+                                            Tu usuario actual es miembro de proyecto. Este es el acceso a la vista de proyectos.
+                                        {% endif %}
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>

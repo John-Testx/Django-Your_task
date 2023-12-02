@@ -31,11 +31,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'user_profile' %}">My Profile</a>
                     </li>
-
+                    {% if  request.user.projectmember.esProjectMember%}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'invitations' %}"> Invitations </a>
                     </li>
-
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'menu' %}">Menu</a>
                     </li>

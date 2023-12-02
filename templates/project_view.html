@@ -3,6 +3,10 @@
 
 {% block scripts %}
 <script>
+//TAREAS POR FECHA
+
+
+// TAREAS COMPLETADAS
 // jquery function
 $(document).ready(function(){
     var ctx = document.getElementById('myChart').getContext('2d');
@@ -76,14 +80,14 @@ $(document).ready(function(){
                     <li class="mt-2 lh-lg">Administrador: {{project.admin}}</li>
                 </ol>
             </div>
-            {% if project.admin == user %}
+            {% if project.admin == user.projectadmin %}
                 <form class="col-12 mb-2 text-center" method="POST" action="{% url 'delete_project' project.id %}">
                     {% csrf_token %}
                     <button class="btn p-1 btn-sm btn-danger"> Eliminar proyecto </button>
                 </form>
             {% endif %} 
             {% for m in member %}
-                {% if m.person == user %}
+                {% if m.person == user.projectmember %}
                 <form class="col-12 mb-2 text-center" method="POST" action="{% url 'exit_project' project.id %}">
                         {% csrf_token %}
                         <button class="btn p-1 btn-sm btn-danger"> Salir de proyecto </button>
@@ -115,7 +119,7 @@ $(document).ready(function(){
                             <!-- Itera a través de las etapas del proyecto y muestra sus nombres -->
                             {% for s in stage %}   
                             <th class="text-center pr-col" style="border: 2px solid black; background-color:{{s.color}}; width:auto;" >
-                                {% if project.admin == user %}
+                                {% if project.admin == user.projectadmin %}
                                 <p>
                                     <form method="POST" action="{% url 'delete_stage' project.id s.id%}">
                                         <small class="fs-5">{{s.nombre}}</small>
@@ -147,7 +151,7 @@ $(document).ready(function(){
                                                 <div class="row">
                                                     <a class="col-md-8 text-decoration-none" onclick="toggleTaskDetails({{ t.id }})">{{t.nombre}}</a>
                                                     <!-- Formulario para eliminar tareas (solo visible para el administrador del proyecto) -->
-                                                    {% if project.admin == user %}
+                                                    {% if project.admin == user.projectadmin %}
                                                     <div class="col-xl-1">
                                                         <form method="POST" action="{% url "project_delete_task" project.id t.id %}">
                                                             {% csrf_token %} 
@@ -180,7 +184,7 @@ $(document).ready(function(){
             <!-- Contenedor de estadísticas oculto -->
             <div class="row justify-content-center kanban g-0 hidden" id="stats" style="overflow-x:auto; height: 100vh;">
                 <div class="col-12">
-                    <h1 class="display-1 text-center">Tareas Completadas</h1>
+                    <h1 class="display-2 text-center">Tareas Completadas</h1>
                     <canvas id="myChart" width="400" height="100"></canvas>  
                 </div>
             </div>
@@ -259,7 +263,7 @@ $(document).ready(function(){
     <div class="col-lg-2 bg-dark">
         <div class="row">
             <!-- Si el administrador del proyecto es el usuario actual, muestra opciones adicionales -->
-            {% if project.admin == user %}
+            {% if project.admin == user.projectadmin %}
             <div class="col-12 text-center">
                 <button class="btn bg-light mt-2">
                     <div class="col-md-6 mx-auto">
@@ -297,7 +301,7 @@ $(document).ready(function(){
                     </div>
                     <div class="col-3">
                         <p class="col-12 text-white lh-sm">
-                        {% if project.admin == user %}
+                        {% if project.admin == user.projectadmin %}
                         You
                         <br>(Admin)
                         {% else %}
@@ -316,14 +320,14 @@ $(document).ready(function(){
                         <img class="user-small" draggable="false" alt="member" src="{% static "images/default_user.png" %}"></img>
                     </div>
                     <div class="col-3">
-                        {% if m.person == user %}
+                        {% if m.person == user.projectmember %}
                         <p class="text-white">You</p>
                         {% else %}
                         <p class="text-white">{{m.person}}</p>
                         {% endif %}
                     </div>
                     <div class="col-6 text-end">
-                        {% if project.admin == user %}
+                        {% if project.admin == user.projectadmin %}
                         <form method="POST" action="{% url "delete_member" project.id m.person.id %}">
                             {% csrf_token %}    
                             <button class="btn btn-sm btn-danger mb-2 text-white">Delete</button>

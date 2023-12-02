@@ -1,7 +1,8 @@
 from django.shortcuts import render,redirect, get_object_or_404
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
-from tasks.models import UserTasks
+from tasks.models import UserTasks, CommonUser,BaseUser
+from projects.models import ProjectAdmin, ProjectMember
 from tasks.forms import TaskCreateForm
 from django.contrib.auth import login,logout,authenticate
 from django.http import HttpResponseRedirect 
@@ -15,7 +16,7 @@ from django.contrib import messages
 # Create your views here.
 
 
-#Primera vista que da la bienvenida al sitio
+#Primera vista que da la bienvenida al sitio "YourTask"
 def home(request):
     return render(request, 'home.html')
 
@@ -25,26 +26,40 @@ def home(request):
 #que hice mis propios input y luego de que el usuario haya ingresado de manera correcta ambas contraseñas y su nombre,
 #se crea el usuario dentro de la base de datos, a partir de los datos que el usuario ingreso.
 #Luego para que el usuario ya ingrese sesión inmediatamente se hace uso del metodo de django login y se le redirige al menu.
+
 def signup(request):    
     if request.method == 'GET':
         print( 'Sending form registration')
-        return render(request, 'signup.html',{
-        'form': UserCreationForm 
-    })
+        return render(request, 'signup.html',{})
     else:
         if request.POST['password1'] == request.POST['password2']:
             #register user
             try:
-                user= User.objects.create_user(username=request.POST['username'],
-                password=request.POST['password1'],email=request.POST['mail1'])
-                user.save()
-                login(request,user)
-                return redirect('menu')
-            except IntegrityError:
+                if(request.POST['usertype'] == 'jefe'):
+                    admin= ProjectAdmin.objects.create_user(username=request.POST['username'],
+                    password=request.POST['password1'],email=request.POST['mail1'])
+                    admin.save()
+                    login(request,admin)
+                    return redirect('menu')
+                elif(request.POST['usertype'] == 'usuario'):
+                    commonUser= CommonUser.objects.create_user(username=request.POST['username'],
+                    password=request.POST['password1'],email=request.POST['mail1'])
+                    commonUser.save()
+                    login(request,commonUser)
+                    return redirect('menu')
+                elif(request.POST['usertype'] == 'miembro'):
+                    member= ProjectMember.objects.create_user(username=request.POST['username'],
+                    password=request.POST['password1'],email=request.POST['mail1'])
+                    member.save()
+                    login(request,member)
+                    return redirect('menu')
+            except Exception as e:
+                print(e)
                 return render(request, 'login.html',{
                     'form': UserCreationForm,
                     'error': 'User already exists'
                 })
+                
         return render(request,'signup.html',{
             'form': UserCreationForm,
             'error':'Password do not match'})
@@ -67,8 +82,11 @@ def loguserin(request):
             'form': AuthenticationForm,
         })
     else:
-        user = authenticate(request, username=request.POST['username'], 
-        password=request.POST['password'])
+        try:
+            user = authenticate(request, username=request.POST['username'], 
+            password=request.POST['password'])
+        except Exception as e:
+            print(e)
         if user is None:
             return render(request,'login.html',{
             'form': AuthenticationForm,
@@ -80,11 +98,11 @@ def loguserin(request):
 
 
 # Vista de tareas de usuario
-#from here, requires login 
 #Task es la vista que muestra todas las tareas del usuario y la cual permite también crear tareas.
 @login_required        
 def task(request):
     if request.method == 'GET':
+        commonUser= CommonUser.objects.get(username=request.user)
         tasks = UserTasks.objects.filter(user=request.user, fechaTermino__isnull=True).order_by('nombre')
         form = TaskCreateForm()
         return render(request, 'usertask.html',
@@ -111,7 +129,17 @@ def task(request):
 #Esta es la vista que le muestra al usuario para elegir entre las tareas y los proyectos.
 @login_required
 def menu(request):
-    return render(request, 'menu.html')
+    data ={}
+    
+    if hasattr(request.user, 'projectadmin') and request.user.projectadmin.esProjectAdmin:
+        data['user'] = 'ProjectAdmin'
+    elif hasattr(request.user, 'projectmember') and request.user.projectmember.esProjectMember:
+        data['user'] = 'ProjectMember'
+    elif hasattr(request.user, 'commonuser') and request.user.commonuser.esCommonUser:
+        data['user'] = 'CommonUser'
+    
+    
+    return render(request, 'menu.html', {'data': data})
 
 
 # Marcar tarea como completada  

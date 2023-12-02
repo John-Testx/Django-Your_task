@@ -41,7 +41,15 @@
                             </p>
                         </form>
                     </li>
-                    <li class="lg-lg">Tipo de cuenta: Usuario común</li>
+                    <li class="lg-lg">Tipo de cuenta: 
+                        {% if request.user.projectmember.esProjectMember%}
+                        Miembro de proyecto
+                        {% elif request.user.projectadmin.esProjectAdmin %}
+                        Jefe de proyecto
+                        {% elif request.user.commonuser.esCommonUser %}
+                        Usuario común
+                        {% endif %}
+                    </li>
                     <li class="lh-lg">Fecha de registro: {{user.date_joined|date:'l M j Y h:i A'}}</li>
                 </ol>
             </div>

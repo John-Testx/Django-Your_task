@@ -3,9 +3,26 @@ import django
 from django.db import models
 from django.core.mail import EmailMessage
 from django.conf import settings
-from django.contrib.auth.models import User
+from tasks.models import BaseUser
+from django.contrib.auth.models import User, Group, Permission
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
+class ProjectAdmin(BaseUser):
+    esProjectAdmin = models.BooleanField(default=True)
+    class Meta:
+        
+        verbose_name = "Project Admin"
+        verbose_name_plural = "Project Admins"
+
+class ProjectMember(BaseUser):
+    esProjectMember = models.BooleanField(default=True)
+    class Meta:
+        
+        verbose_name = "Project Member"
+        verbose_name_plural = "Project Members"
+    
     
 class Project(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -14,8 +31,12 @@ class Project(models.Model):
     fechaInicio = models.DateTimeField(auto_now_add=True)
     fechaTermino = models.DateTimeField(null=True, blank=True)
     proyecto_cerrado = models.BooleanField(default=False)
-    admin= models.ForeignKey(User, on_delete=models.CASCADE, related_name='User')
-    members = models.ManyToManyField(User, through="ProjectMembers")
+    admin= models.ForeignKey(ProjectAdmin, on_delete=models.CASCADE, related_name='ProjectAdmin')
+    members = models.ManyToManyField(ProjectMember, through="ProjectRegistratedMembers")
+    
+    class Meta:
+        verbose_name = "Project"
+        verbose_name_plural = "Projects"
     
     def __str__(self):
         return self.nombre 
@@ -26,15 +47,23 @@ class Stage(models.Model):
     project= models.ForeignKey(Project, on_delete=models.CASCADE)
     color= models.CharField(max_length=100)
     
+    class Meta:
+        verbose_name = "Stage"
+        verbose_name_plural = "Stages"
+    
     def __str__(self):
         return self.nombre 
 
-class ProjectMembers(models.Model):
+class ProjectRegistratedMembers(models.Model):
     id = models.BigAutoField(primary_key=True)
-    person = models.ForeignKey(User, on_delete=models.CASCADE)
+    person = models.ForeignKey(ProjectMember, on_delete=models.CASCADE, related_name='ProjectMember')
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='Project')
     date_joined = models.DateTimeField(auto_now_add=True)
     charge = models.CharField(max_length=64, null=True)
+    
+    class Meta:
+        verbose_name = "Project Registrated Member"
+        verbose_name_plural = "Project Registrated Members"
     
     def __str__(self):
         return self.person.username 
@@ -47,21 +76,29 @@ class ProjectTask(models.Model):
     fechaTermino = models.DateTimeField(null=True, blank=True)
     etiquetas= models.CharField(max_length=100, null=True, blank=True)
     importancia= models.CharField(max_length=100, null=True, blank=True)
-    encargado = models.ForeignKey(ProjectMembers, on_delete=models.CASCADE, null=True, blank=True)
+    encargado = models.ForeignKey(ProjectRegistratedMembers, on_delete=models.CASCADE, null=True, blank=True)
     completado = models.BooleanField(default=False)
     project= models.ForeignKey(Project, on_delete=models.CASCADE)
     stage= models.ForeignKey(Stage, on_delete=models.CASCADE) 
 
+    class Meta:
+        verbose_name = "Project Task"
+        verbose_name_plural = "Project Tasks"
+    
     def __str__(self):
         return self.nombre 
 
 class ProjectInvitation(models.Model):
     id = models.BigAutoField(primary_key=True)
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_invitations')
-    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_invitations')
+    sender = models.ForeignKey(ProjectAdmin, on_delete=models.CASCADE, related_name='sent_invitations')
+    recipient = models.ForeignKey(ProjectMember, on_delete=models.CASCADE, related_name='received_invitations')
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     sent_date = models.DateTimeField(auto_now_add=True)
     accepted = models.BooleanField(default=False, editable=False)
+    
+    class Meta:
+        verbose_name = "Project Invitation"
+        verbose_name_plural = "Project Invitations"
     
     def __str__(self):
         return f"Invitation from {self.sender.username} to {self.recipient.username} for project {self.project.nombre}"
@@ -84,5 +121,5 @@ class ProjectInvitation(models.Model):
         msg = EmailMessage(subject, body, settings.EMAIL_HOST_USER, to)
         msg.send()
         
-        return super().save(args, **kwargs) 
+        return super(ProjectInvitation, self).save(*args, **kwargs)
     

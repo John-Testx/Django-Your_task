@@ -43,6 +43,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTH_USER_MODEL = "tasks.BaseUser"
 
 # Application definition
 
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'tasks',
     'projects',
+    
 ]
 
 MIDDLEWARE = [
@@ -157,6 +159,7 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_PASSWORD")
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
+LOGIN_URL = 'login'
 
 DATABASES={
     'default': {

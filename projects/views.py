@@ -1,21 +1,30 @@
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib.auth.decorators import login_required
-from projects.models import Project, ProjectMembers, ProjectTask , Stage, ProjectInvitation
-from projects.forms import FormCreateProject, FormTaskProject, FormCreateStage, FormUpdateTask , Form_invitations
+from tasks.models import BaseUser
+from icecream import ic
+from projects.models import Project, ProjectRegistratedMembers, ProjectTask , Stage, ProjectInvitation, ProjectMember
+from projects.forms import FormCreateProject, FormTaskProject, FormCreateStage, FormUpdateTask , InvitationsForms
 from django.utils import timezone
 
 # Create your views here.
 
-# my_project es la vista donde se muestran los proyectos que tiene el usuario actualmente
-# y donde también se le permite crear proyectos
+def output_to_file(text):
+    with open('debug_log.txt', 'a') as f:
+        f.write(text + "\n")
+        
+ic.configureOutput(prefix='Debug| ', outputFunction=output_to_file,
+                   includeContext=True)
+
+# my_project es la vista donde se muestran los proyectos que posee el usuario actualmente
+# y donde también si es que posee el rol de jefe de proyecto, a este se le permite crear proyectos
 
 # Decorador para requerir que el usuario esté autenticado para acceder a la vista
 @login_required
 def my_project(request):
     # Recopila todos los proyectos y miembros asociados al usuario
     project = Project.objects.filter().order_by('nombre').all()
-    member = ProjectMembers.objects.filter(person=request.user)
+    member = ProjectRegistratedMembers.objects.filter(person=request.user)
     
     # Crea una instancia del formulario para crear un proyecto
     f = FormCreateProject()
@@ -30,7 +39,7 @@ def my_project(request):
             form = FormCreateProject(request.POST)
             if form.is_valid():
                 new_project = form.save(commit=False)
-                new_project.admin = request.user
+                new_project.admin = request.user.projectadmin
                 new_project.save()
 
                 # Creación de etapas predeterminadas para el nuevo proyecto
@@ -59,7 +68,7 @@ def my_project(request):
 def project_view(request,project_id):
     stage= Stage.objects.filter(project=project_id)
     task= ProjectTask.objects.filter(project=project_id).order_by('nombre').all()
-    member= ProjectMembers.objects.filter(project=project_id)
+    member= ProjectRegistratedMembers.objects.filter(project=project_id)
     project= get_object_or_404(Project, id=project_id)
     
     f= FormTaskProject()
@@ -87,11 +96,11 @@ def project_view(request,project_id):
             
             return redirect('project_view',project_id)
         
-        except ValueError: 
+        except ValueError:
             stage= Stage.objects.filter(project=project_id)
             project= get_object_or_404(Project, id=project_id)
             task= ProjectTask.objects.filter(project=project_id).order_by('nombre').all()
-            member= ProjectMembers.objects.filter(project=project_id)
+            member= ProjectRegistratedMembers.objects.filter(project=project_id)
             
             f= FormTaskProject()
             f.onlyProjectStages(project_id)
@@ -102,6 +111,8 @@ def project_view(request,project_id):
         
     return render (request, 'project_view.html',
                    {'task':task, 'stage':stage, 'form':f ,'member':member,'project':project,'form_s':f_s})
+
+###############################################################Tasks###################################################################
 
 @login_required    
 def delete_project_task(request, project_id, task_id):
@@ -123,6 +134,7 @@ def get_task_details(request, task_id):
         else:
             return JsonResponse({'error': 'Task not found'}, status=404)
     except Exception as e:
+        ic(e)
         return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
@@ -142,6 +154,7 @@ def update_task(request, project_id, task_id):
         return JsonResponse({'error': 'Task not found'}, status=404)
     
     except Exception as e:
+        ic(e)
         # Log the exception details
         print(f"Exception in update_task view: {str(e)}")
         return JsonResponse({'error': 'Internal Server Error'}, status=500)
@@ -160,8 +173,20 @@ def complete_project_task(request, project_id, task_id):
     except ProjectTask.DoesNotExist:
         return JsonResponse({'error': 'Task not found'}, status=404)
     except Exception as e:
+        ic(e)
         return JsonResponse({'error': str(e)}, status=500)
+
+#Función no implementada por falta de tiempo
+@login_required
+def get_task_by_date(request, project_id):
+    tasks = ProjectTask.objects.filter(project_id=project_id)
     
+    t = {"tasks":[]}
+    for task in tasks:
+        t['tasks'].append({'nombre': task.nombre, 'fechaInicio': task.fechaInicio.strftime('%Y-%m-%d')})
+    
+    return JsonResponse({'tasks': t})
+
 @login_required
 def delete_stage(request, project_id, stage_id):
     try:
@@ -182,76 +207,103 @@ def delete_project(request, project_id):
     except ValueError:
         return redirect('project_view', project_id)
     
-@login_required
-def exit_project(request, project_id):
-    try:
-        if request.method == 'POST':
-            member= get_object_or_404(ProjectMembers, project=project_id, person=request.user)
-            member.delete()
-            return redirect('project')
-            
-    except ValueError:
-        return redirect('project_view', project_id)
-
-@login_required
-def delete_member(request,project_id,member_id):
-    try:
-        if request.method == 'POST':
-            member= get_object_or_404(ProjectMembers, project=project_id, person=member_id)
-            member.delete()
-            return redirect('project_view', project_id)
-    except ValueError:
-        return redirect('project_view', project_id)
-
-
-################################
-
-#Invitaciones
+############################################################Invitations################################################################
     
 @login_required
 def show_invitations(request):
-    invite= ProjectInvitation.objects.filter(recipient=request.user)
+    invite= ProjectInvitation.objects.filter(recipient=request.user.projectmember)
     return render(request, 'invitations.html',{'invite':invite})
 
 
 @login_required
 def make_invitation(request, project_id):
-    invitacion= Form_invitations()
-    invitacion.onlyYourProject(project_id)
+    form = InvitationsForms()
+    data=[]
+    
+    if request.method == 'GET':
+        username= request.GET.get('username',None)
+        email = request.GET.get('mail1',None)
+        if username:
+            try:
+                user= BaseUser.objects.get(username=username)
+                
+                if(email != ''):
+                    user= BaseUser.objects.get(username=username,email=email)
+                
+                m = ProjectMember.objects.get(id=user.id)
+                
+                if(m != None):
+                    data.append(user)
+                
+                return render(request, 'make_invitation.html',{'data':data, 'project': project_id, 'form': form})
+            except Exception as e:
+                ic(e)
+                return render(request, 'make_invitation.html') 
+        else:    
+            return render(request, 'make_invitation.html',{'data':data, 'project':project_id, 'form': form})
+    
+    return render(request, 'make_invitation.html', {'project':project_id, 'form': form})
 
-    return render(request, 'make_invitation.html', {'form':invitacion})
+@login_required
+def send_invitation(request, project_id, user_id):
+    project = get_object_or_404(Project, id=project_id)
+    member = get_object_or_404(ProjectMember, id=user_id)
+    
+    if request.method == 'POST':
+    
+        invitation = ProjectInvitation.objects.create(
+                sender=request.user.projectadmin,
+                recipient=member,
+                project=project,
+        )
+                    
+        return render(request, 'make_invitation.html')
 
 @login_required
 def accept_invitations(request, invitation_id):
     try:
-        invite= ProjectInvitation.objects.filter(recipient=request.user)
+        invite= ProjectInvitation.objects.filter(recipient=request.user.projectmember)
         if request.method == 'POST':
-            invite= get_object_or_404(ProjectInvitation, id=invitation_id, recipient=request.user)
+            invite= get_object_or_404(ProjectInvitation, id=invitation_id, recipient=request.user.projectmember)
             invite.accepted= True
             
-            x= ProjectMembers.objects.create(person=request.user, project=invite.project, charge='member')
+            x= ProjectRegistratedMembers.objects.create(person=request.user.projectmember, project=invite.project, charge='member')
             x.save()
             invite.delete()
             return redirect('invitations')
     except Exception as e:
-        print('error: ',e)
+        ic(e)
         return redirect('invitations')
     
 @login_required
 def decline_invitation(request, invitation_id):
     try:
-        invite= ProjectInvitation.objects.filter(recipient=request.user)
+        invite= ProjectInvitation.objects.filter(recipient=request.user.projectmember)
         if request.method == 'POST':
-            invite= get_object_or_404(ProjectInvitation, id=invitation_id, recipient=request.user)
+            invite= get_object_or_404(ProjectInvitation, id=invitation_id, recipient=request.user.projectmember)
             invite.delete()
             return redirect('invitations')
     except Exception as e:
-        print('error: ',e)
+        ic(e)
         return redirect('invitations')
-
     
+@login_required
+def delete_member(request,project_id,member_id):
+    try:
+        if request.method == 'POST':
+            member= get_object_or_404(ProjectRegistratedMembers, project=project_id, person=member_id)
+            member.delete()
+            return redirect('project_view', project_id)
+    except ValueError:
+        return redirect('project_view', project_id)
 
-# def output_to_file(text):
-#     with open('debug_log.txt', 'a') as f:
-#         f.write(text + "\n")
-# message= "Tu invitacion al proyecto :s".format(x.project.nombre)
+@login_required
+def exit_project(request, project_id):
+    try:
+        if request.method == 'POST':
+            member= get_object_or_404(ProjectRegistratedMembers, project=project_id, person=request.user.projectmember)
+            member.delete()
+            return redirect('project')
+            
+    except ValueError:
+        return redirect('project_view', project_id)
