@@ -95,24 +95,24 @@ WSGI_APPLICATION = 'Dds.wsgi.application'
 
 
 # # If the environment variable GAE_APPLICATION is set, then update the database configuration
-# if os.getenv('GAE_APPLICATION', None):
-#     DATABASES={
-#         'ENGINE': 'django.db.backends.mysql',
-#         'HOST': '/cloudsql/yourtaskmanager-402219:us-central1:your-task-manager',
-#         'NAME': 'Django',
-#         'PORT':'3306',
-#         'USER': 'user4',
-#         'PASSWORD': 'admin',
-#     }
-# else:
-#     DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'Django',
-#         'USER': 'user2',
-#         'PASSWORD': 'admin',
-#     }
-# }
+if os.getenv('GAE_APPLICATION', None):
+    DATABASES={
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': '/cloudsql/yourtaskmanager-402219:us-central1:your-task-manager',
+        'NAME': 'Django',
+        'PORT':'3306',
+        'USER': 'user4',
+        'PASSWORD': 'admin',
+    }
+else:
+    DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'Django',
+        'USER': 'user2',
+        'PASSWORD': 'admin',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -161,11 +161,11 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 LOGIN_URL = 'login'
 
-DATABASES={
-    'default': {
-       'ENGINE': 'django.db.backends.sqlite3',
-       'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
+# DATABASES={
+#     'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
+# }
 
 

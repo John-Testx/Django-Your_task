@@ -1,0 +1,2 @@
+Debug| views.py:240 in make_invitation()
+       e: DoesNotExist('BaseUser matching query does not exist.')

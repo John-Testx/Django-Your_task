@@ -8,7 +8,7 @@ class FormCreateProject(forms.ModelForm):
 
     nombre = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Escribir nombre...'}), label="Nombre de proyecto")
     descripcion = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Escribir descripción....', 'rows': '2'}), label="Descripción del proyecto")
-    fechaTermino = forms.DateField(input_formats=['%d/%m/%Y'],widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}), label="Fecha de Termino")
+    fechaTermino = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}), label="Fecha de Termino")
 
     
 class FormCreateStage(forms.ModelForm):

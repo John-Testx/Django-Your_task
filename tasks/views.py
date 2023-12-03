@@ -103,18 +103,21 @@ def loguserin(request):
 def task(request):
     if request.method == 'GET':
         commonUser= CommonUser.objects.get(username=request.user)
-        tasks = UserTasks.objects.filter(user=request.user, fechaTermino__isnull=True).order_by('nombre')
+        tasks = UserTasks.objects.filter(user=request.user.commonuser, fechaTermino__isnull=True).order_by('nombre')
         form = TaskCreateForm()
         return render(request, 'usertask.html',
         {'tasks': tasks, 'form': form})
     if request.method == 'POST':
         try:
             form = TaskCreateForm(request.POST)
-            new_task = form.save(commit=False)
-            new_task.user = request.user
-            new_task.save()
-            print(new_task)
-            return redirect('usertask')
+            
+            if form.is_valid():
+                new_task = form.save(commit=False)
+                new_task.user = request.user.commonuser
+                new_task.save()
+                print(new_task)
+                return redirect('usertask')
+            
         except ValueError:
             return render(request, 'create_task.html', {
             'form': TaskCreateForm(),
